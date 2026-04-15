@@ -1,4 +1,4 @@
-node('agent1') {
+node {
 
     stage('Checkout') {
         checkout scm
@@ -6,10 +6,13 @@ node('agent1') {
 
     stage('Build') {
         sh 'chmod +x gradlew || true'
-        sh './gradlew build'
+        sh './gradlew clean build'
     }
 
     stage('Run') {
-        sh 'java -cp build/classes/java/main App'
+        sh '''
+        pkill -f gradle-jenkins-demo || true
+        nohup java -jar build/libs/*.jar > app.log 2>&1 &
+        '''
     }
 }
