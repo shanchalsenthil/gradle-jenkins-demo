@@ -1,7 +1,14 @@
+properties([
+    parameters([
+        string(name: 'BRANCH_NAME', defaultValue: 'develop', description: 'Git branch to build'),
+        string(name: 'IMAGE_NAME', defaultValue: 'gradle-app', description: 'Docker image name')
+    ])
+])
+
 node {
 
     stage('Checkout') {
-        checkout scm
+        git branch: "${params.BRANCH_NAME}", url: 'https://github.com/shanchalsenthil/gradle-jenkins-demo.git'
     }
 
     stage('Build') {
@@ -9,10 +16,15 @@ node {
         sh './gradlew clean build'
     }
 
-    stage('Run') {
-        sh '''
-        pkill -f gradle-jenkins-demo || true
-        nohup java -jar build/libs/*.jar > app.log 2>&1 &
-        '''
+    stage('Build Docker Image') {
+        sh "docker build -t ${params.IMAGE_NAME} ."
+    }
+
+    stage('Run Container') {
+        sh """
+        docker stop gradle-container || true
+        docker rm gradle-container || true
+        docker run -d -p 8085:8080 --name gradle-container ${params.IMAGE_NAME}
+        """
     }
 }
