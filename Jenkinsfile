@@ -7,8 +7,12 @@ properties([
 
 node {
 
+    def containerName = "gradle-${params.BRANCH_NAME}"
+    def imageTag = "${params.IMAGE_NAME}:${BUILD_NUMBER}"
+
     stage('Checkout') {
-        git branch: "${params.BRANCH_NAME}", url: 'https://github.com/shanchalsenthil/gradle-jenkins-demo.git'
+        git branch: "${params.BRANCH_NAME}",
+        url: 'https://github.com/shanchalsenthil/gradle-jenkins-demo.git'
     }
 
     stage('Build') {
@@ -17,14 +21,22 @@ node {
     }
 
     stage('Build Docker Image') {
-        sh "docker build -t ${params.IMAGE_NAME} ."
+        sh "docker build -t ${imageTag} ."
+    }
+
+    stage('Stop Old Container') {
+        sh """
+        docker stop ${containerName} || true
+        docker rm ${containerName} || true
+        """
     }
 
     stage('Run Container') {
         sh """
-        docker stop gradle-container || true
-        docker rm gradle-container || true
-        docker run -d -p 8085:8080 --name gradle-container ${params.IMAGE_NAME}
+        docker run -d \
+        --name ${containerName} \
+        -p 0:8080 \
+        ${imageTag}
         """
     }
 }
