@@ -16,23 +16,23 @@ node {
     }
 
     stage('Build') {
-        sh 'chmod +x gradlew || true'
-        sh './gradlew clean build'
+        bat 'chmod +x gradlew || true'
+        bat './gradlew clean build'
     }
 
     stage('Build Docker Image') {
-        sh "docker build -t ${imageTag} ."
+        bat "docker build -t ${imageTag} ."
     }
 
     stage('Stop Old Container') {
-        sh """
+        bat """
         docker stop ${containerName} || true
         docker rm ${containerName} || true
         """
     }
 
     stage('Run Container') {
-        sh """
+        bat """
         docker run -d \
         --name ${containerName} \
         -p 0:8080 \
